@@ -1,0 +1,61 @@
+version: '3'
+
+services:    
+  mysql:
+    build: 
+      dockerfile: ./docker/mysql.dockerfile
+      context: .
+    image: gmauricio/mysql
+    container_name: mysql
+    ports: 
+      - "3306:3306"
+    networks: 
+      - globo-network
+    command: 
+      --lower_case_table_names=0     
+    environment:
+        MYSQL_ROOT_PASSWORD: qwerty
+        MYSQL_DATABASE: globodb
+        MYSQL_USER: globo
+        MYSQL_PASSWORD: globo123
+  
+  rabbitmq:
+    image: rabbitmq:management
+    container_name: rabbitmq
+    ports:
+      - 5672:5672 
+      - 15672:15672
+    networks: 
+      - globo-network
+  
+  api:
+    build:
+      dockerfile: ./docker/api.dockerfile
+      context: .
+    image: gmauricio/api
+    container_name: api
+    ports: 
+      - 11080:11080
+    networks: 
+      - globo-network
+    depends_on:
+      - mysql
+      - rabbitmq
+  
+  consumer:
+    build:
+      dockerfile: ./docker/consumer.dockerfile
+      context: .
+    image: gmauricio/consumer
+    container_name: consumer
+    ports: 
+      - 12080:12080
+    networks: 
+      - globo-network
+    depends_on:
+      - mysql
+      - rabbitmq    
+
+networks: 
+  globo-network:
+    driver: bridge
